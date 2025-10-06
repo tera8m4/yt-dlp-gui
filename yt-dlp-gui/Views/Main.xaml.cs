@@ -206,6 +206,24 @@ namespace yt_dlp_gui.Views {
             });
             Data.selectedConfig = Data.Configs.FirstOrDefault(x => x.file == Data.GUIConfig.ConfigurationFile, Data.Configs.First());
         }
+        private string FindExecutableInPath(string executableName) {
+            var pathEnv = Environment.GetEnvironmentVariable("PATH");
+            if (string.IsNullOrWhiteSpace(pathEnv)) return null;
+
+            var paths = pathEnv.Split(Path.PathSeparator);
+            foreach (var path in paths) {
+                try {
+                    var fullPath = Path.Combine(path, executableName);
+                    if (File.Exists(fullPath)) {
+                        return fullPath;
+                    }
+                } catch {
+                    // Skip invalid paths
+                }
+            }
+            return null;
+        }
+
         public void ScanDepends() {
             var isYoutubeDl = @"^youtube-dl\.exe";
             if (!string.IsNullOrWhiteSpace(Data.PathYTDLP) && File.Exists(Data.PathYTDLP)) {
@@ -232,15 +250,43 @@ namespace yt_dlp_gui.Views {
                         Data.PathYTDLP = DLP.Path_DLP = dep_ytdlp;
                     } else if (!string.IsNullOrWhiteSpace(dep_youtubedl)) {
                         Data.PathYTDLP = DLP.Path_DLP = dep_youtubedl;
+                    } else {
+                        // Try to find yt-dlp in system PATH
+                        var pathYtdlp = FindExecutableInPath("yt-dlp.exe");
+                        if (!string.IsNullOrWhiteSpace(pathYtdlp)) {
+                            Data.PathYTDLP = DLP.Path_DLP = pathYtdlp;
+                        } else {
+                            // Fallback to youtube-dl in PATH
+                            var pathYoutubeDl = FindExecutableInPath("youtube-dl.exe");
+                            if (!string.IsNullOrWhiteSpace(pathYoutubeDl)) {
+                                Data.PathYTDLP = DLP.Path_DLP = pathYoutubeDl;
+                            }
+                        }
                     }
 
                 }
                 if (Regex.IsMatch(DLP.Path_DLP, isYoutubeDl)) DLP.Type = DLP.DLPType.youtube_dl;
                 if (string.IsNullOrWhiteSpace(DLP.Path_Aria2)) {
-                    Data.PathAria2 = DLP.Path_Aria2 = dep_aria2;
+                    if (!string.IsNullOrWhiteSpace(dep_aria2)) {
+                        Data.PathAria2 = DLP.Path_Aria2 = dep_aria2;
+                    } else {
+                        // Try to find aria2c in system PATH
+                        var pathAria2 = FindExecutableInPath("aria2c.exe");
+                        if (!string.IsNullOrWhiteSpace(pathAria2)) {
+                            Data.PathAria2 = DLP.Path_Aria2 = pathAria2;
+                        }
+                    }
                 }
                 if (string.IsNullOrWhiteSpace(FFMPEG.Path_FFMPEG)) {
-                    Data.PathFFMPEG = DLP.Path_FFMPEG = FFMPEG.Path_FFMPEG = dep_ffmpeg;
+                    if (!string.IsNullOrWhiteSpace(dep_ffmpeg)) {
+                        Data.PathFFMPEG = DLP.Path_FFMPEG = FFMPEG.Path_FFMPEG = dep_ffmpeg;
+                    } else {
+                        // Try to find ffmpeg in system PATH
+                        var pathFfmpeg = FindExecutableInPath("ffmpeg.exe");
+                        if (!string.IsNullOrWhiteSpace(pathFfmpeg)) {
+                            Data.PathFFMPEG = DLP.Path_FFMPEG = FFMPEG.Path_FFMPEG = pathFfmpeg;
+                        }
+                    }
                 }
             }
         }
