@@ -38,7 +38,7 @@ jobs:
       run: dotnet publish -c ${{ matrix.configuration }} -r win-x64 --self-contained true -p:PublishReadyToRun=true -p:PublishSingleFile=true 
     
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v4
       with:
         name: yt-dlp-gui-${{ github.sha }}-${{ matrix.configuration }}
         path: "D:\\a\\yt-dlp-gui\\yt-dlp-gui\\yt-dlp-gui\\bin\\Debug\\net6.0-windows10.0.17763.0\\win-x64\\publish"
